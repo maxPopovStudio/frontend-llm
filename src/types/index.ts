@@ -58,6 +58,7 @@ export interface LLMModel {
   description: string;
   modelId: string;
   provider: 'transformers.js';
+  pipelineType?: string; // Тип pipeline: 'text-generation' або 'text2text-generation'
   status: 'not_loaded' | 'loading' | 'loaded' | 'error';
   error?: string;
 }

@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { TextInput } from './TextInput';
 import { LLMSelector } from './LLMSelector';
-import { VoiceInput } from './VoiceInput';
 import { AnalysisSteps } from './AnalysisSteps';
 import { ChartVisualization } from './ChartVisualization';
 import { textAnalysisStore, chartStore } from '../stores';
@@ -52,10 +51,6 @@ export const App = observer(() => {
 
           <div className="controls-section">
             <TextInput />
-          </div>
-
-          <div className="controls-section">
-            <VoiceInput />
           </div>
 
           <div className="controls-section">

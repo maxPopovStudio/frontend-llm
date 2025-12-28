@@ -13,14 +13,23 @@ export class VoiceInputStore {
 
   constructor() {
     makeAutoObservable(this);
-    this.initializeWhisper();
+    // Ініціалізуємо Whisper тільки коли потрібно (lazy loading)
+    // this.initializeWhisper();
   }
 
   private async initializeWhisper() {
     try {
-      // Ініціалізація Whisper через transformers.js
-      const { pipeline } = await import('@xenova/transformers');
+      // Динамічно імпортуємо transformers.js
+      const { pipeline, env } = await import('@xenova/transformers');
       
+      // Налаштовуємо env
+      if (env) {
+        env.allowLocalModels = false;
+        env.allowRemoteModels = true;
+        env.useBrowserCache = true;
+      }
+      
+      // Ініціалізація Whisper через transformers.js
       try {
         this.recognition = await pipeline(
           'automatic-speech-recognition',
@@ -48,6 +57,11 @@ export class VoiceInputStore {
 
   async startRecording() {
     try {
+      // Ініціалізуємо Whisper перед початком запису, якщо ще не ініціалізовано
+      if (!this.recognition) {
+        await this.initializeWhisper();
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       this.mediaRecorder = new MediaRecorder(stream);
       this.audioChunks = [];

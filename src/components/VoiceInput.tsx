@@ -23,51 +23,27 @@ export const VoiceInput = observer(() => {
   };
 
   return (
-    <div className="voice-input-container">
-      <div className="voice-input-controls">
-        {!isRecording ? (
-          <button
-            className="voice-button voice-button-start"
-            onClick={handleStartRecording}
-            disabled={isProcessing}
-          >
-            🎤 Почати запис
-          </button>
-        ) : (
-          <button
-            className="voice-button voice-button-stop"
-            onClick={handleStopRecording}
-          >
-            ⏹ Зупинити запис
-          </button>
-        )}
-      </div>
-
-      {isRecording && (
-        <div className="voice-recording-indicator">
-          <span className="recording-dot"></span>
-          Запис триває...
-        </div>
+    <div className="voice-input-inline">
+      {!isRecording ? (
+        <button
+          className="voice-button-inline voice-button-start"
+          onClick={handleStartRecording}
+          disabled={isProcessing}
+          title="Почати голосовий запис"
+        >
+          🎤
+        </button>
+      ) : (
+        <button
+          className="voice-button-inline voice-button-stop"
+          onClick={handleStopRecording}
+          title="Зупинити запис"
+        >
+          ⏹
+        </button>
       )}
-
-      {isProcessing && (
-        <div className="voice-processing">
-          ⏳ Обробка аудіо...
-        </div>
-      )}
-
-      {error && (
-        <div className="voice-error">
-          ❌ {error}
-        </div>
-      )}
-
-      {transcript && !isProcessing && (
-        <div className="voice-transcript">
-          <strong>Розпізнаний текст:</strong>
-          <p>{transcript}</p>
-        </div>
-      )}
+      {isProcessing && <span className="voice-processing-inline">⏳</span>}
+      {error && <span className="voice-error-inline" title={error}>❌</span>}
     </div>
   );
 });

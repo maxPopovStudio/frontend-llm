@@ -1,10 +1,62 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
-import ReactECharts from 'echarts-for-react';
+import * as echarts from 'echarts/core';
+import { LineChart, BarChart, PieChart, ScatterChart } from 'echarts/charts';
+import {
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  LegendComponent
+} from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
 import { chartStore } from '../stores';
+
+// Реєструємо тільки необхідні компоненти
+echarts.use([
+  LineChart,
+  BarChart,
+  PieChart,
+  ScatterChart,
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  LegendComponent,
+  CanvasRenderer
+]);
 
 export const ChartVisualization = observer(() => {
   const { chartConfig, selectedChartType } = chartStore;
+  const chartRef = useRef<HTMLDivElement>(null);
+  const chartInstance = useRef<echarts.ECharts | null>(null);
+
+  useEffect(() => {
+    if (chartRef.current && chartConfig) {
+      // Ініціалізуємо діаграму
+      if (!chartInstance.current) {
+        chartInstance.current = echarts.init(chartRef.current);
+      }
+      
+      // Оновлюємо конфігурацію
+      chartInstance.current.setOption(chartConfig.echartsConfig);
+      
+      // Обробка зміни розміру
+      const handleResize = () => {
+        chartInstance.current?.resize();
+      };
+      window.addEventListener('resize', handleResize);
+      
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [chartConfig]);
+
+  useEffect(() => {
+    return () => {
+      // Очищуємо діаграму при розмонтуванні
+      chartInstance.current?.dispose();
+    };
+  }, []);
 
   if (!chartConfig) {
     return (
@@ -14,7 +66,7 @@ export const ChartVisualization = observer(() => {
     );
   }
 
-  const { echartsConfig, title, description } = chartConfig;
+  const { title, description } = chartConfig;
 
   return (
     <div className="chart-visualization-container">
@@ -26,11 +78,7 @@ export const ChartVisualization = observer(() => {
         )}
       </div>
       <div className="chart-wrapper">
-        <ReactECharts
-          option={echartsConfig}
-          style={{ height: '500px', width: '100%' }}
-          opts={{ renderer: 'canvas' }}
-        />
+        <div ref={chartRef} style={{ height: '500px', width: '100%' }} />
       </div>
     </div>
   );
