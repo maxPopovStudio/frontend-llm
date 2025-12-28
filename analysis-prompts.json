@@ -1,0 +1,83 @@
+{
+  "steps": [
+    {
+      "id": "step1_initial_analysis",
+      "name": "Початковий аналіз тексту",
+      "description": "Аналізує текст та визначає наявність структурованих даних",
+      "prompt": "Проаналізуй наступний текст та визнач, чи містить він структуровані дані (числа, категорії, періоди, значення). Відповідь має бути у форматі JSON:\n{\n  \"hasStructuredData\": true/false,\n  \"dataTypes\": [\"список типів даних, які знайдені\"],\n  \"summary\": \"короткий опис того, що знайдено в тексті\"\n}\n\nТекст для аналізу:\n{text}",
+      "outputFormat": "json",
+      "requiredFields": ["hasStructuredData", "dataTypes", "summary"]
+    },
+    {
+      "id": "step2_extract_structured_data",
+      "name": "Витягування структурованих даних",
+      "description": "Витягує структуровані дані з тексту у форматі масиву об'єктів",
+      "prompt": "Витягни всі структуровані дані з наступного тексту та перетвори їх у масив об'єктів. Кожен об'єкт повинен містити всі доступні поля (назви, категорії, значення, періоди тощо).\n\nВідповідь має бути у форматі JSON:\n{\n  \"extractedData\": [\n    {\"field1\": \"value1\", \"field2\": \"value2\", ...},\n    ...\n  ],\n  \"fields\": [\"список всіх знайдених полів\"],\n  \"dataCount\": число_записів\n}\n\nТекст для аналізу:\n{text}",
+      "outputFormat": "json",
+      "requiredFields": ["extractedData", "fields", "dataCount"],
+      "dependsOn": ["step1_initial_analysis"]
+    },
+    {
+      "id": "step3_validate_data",
+      "name": "Валідація даних",
+      "description": "Перевіряє валідність витягнутих даних та їхню придатність для візуалізації",
+      "prompt": "Перевір валідність наступних даних та визнач, чи достатньо їх для створення діаграми. Дані повинні містити числові значення та категорії.\n\nВідповідь має бути у форматі JSON:\n{\n  \"isValid\": true/false,\n  \"hasNumericValues\": true/false,\n  \"hasCategories\": true/false,\n  \"minDataPoints\": мінімальна_кількість_записів,\n  \"issues\": [\"список проблем, якщо є\"],\n  \"validatedData\": [\"очищені та валідовані дані\"]\n}\n\nДані для валідації:\n{extractedData}",
+      "outputFormat": "json",
+      "requiredFields": ["isValid", "hasNumericValues", "hasCategories", "minDataPoints", "issues", "validatedData"],
+      "dependsOn": ["step2_extract_structured_data"]
+    },
+    {
+      "id": "step4_analyze_data_structure",
+      "name": "Аналіз структури даних",
+      "description": "Аналізує структуру даних для визначення можливих типів діаграм",
+      "prompt": "Проаналізуй структуру даних та визнач їхні характеристики:\n- Чи є часові ряди або послідовності?\n- Скільки категорій?\n- Чи є групування по періодах?\n- Чи є двовимірні координати?\n- Чи це частки від цілого?\n- Чи це одиночний показник?\n\nВідповідь має бути у форматі JSON:\n{\n  \"hasTimeSeries\": true/false,\n  \"hasMultipleCategories\": true/false,\n  \"hasGrouping\": true/false,\n  \"hasTwoDimensions\": true/false,\n  \"isProportional\": true/false,\n  \"isSingleValue\": true/false,\n  \"categoryCount\": число,\n  \"dataPointCount\": число,\n  \"structureDescription\": \"детальний опис структури\"\n}\n\nДані для аналізу:\n{validatedData}",
+      "outputFormat": "json",
+      "requiredFields": ["hasTimeSeries", "hasMultipleCategories", "hasGrouping", "hasTwoDimensions", "isProportional", "isSingleValue", "categoryCount", "dataPointCount", "structureDescription"],
+      "dependsOn": ["step3_validate_data"]
+    },
+    {
+      "id": "step5_select_chart_type",
+      "name": "Вибір типу діаграми",
+      "description": "Обирає найкращий тип діаграми на основі структури даних та описів діаграм",
+      "prompt": "На основі структури даних та описів доступних типів діаграм, вибери найкращий тип діаграми для візуалізації.\n\nДоступні типи діаграм:\n{chartTypesDescription}\n\nХарактеристики даних:\n{dataStructure}\n\nВідповідь має бути у форматі JSON:\n{\n  \"selectedChartType\": \"тип_діаграми\",\n  \"confidence\": число_від_0_до_100,\n  \"reasoning\": \"пояснення чому обрано цей тип\",\n  \"alternativeTypes\": [\"список альтернативних типів з вірогідністю\"]\n}\n\nТипи діаграм для оцінки: line, bar, bar-grouped, pie, scatter, area, radar, funnel, gauge, heatmap",
+      "outputFormat": "json",
+      "requiredFields": ["selectedChartType", "confidence", "reasoning", "alternativeTypes"],
+      "dependsOn": ["step4_analyze_data_structure"]
+    },
+    {
+      "id": "step6_format_chart_data",
+      "name": "Формування даних для діаграми",
+      "description": "Формує ідеальний JSON для обраного типу діаграми згідно з вимогами структури",
+      "prompt": "Перетвори дані у формат, який відповідає структурі обраного типу діаграми.\n\nОбраний тип діаграми: {selectedChartType}\n\nВимоги до структури даних для цього типу:\n{chartTypeDataStructure}\n\nПриклад структури:\n{chartTypeExample}\n\nВихідні дані:\n{validatedData}\n\nВідповідь має бути у форматі JSON:\n{\n  \"chartData\": [\"масив даних у правильному форматі\"],\n  \"fields\": [\"список використаних полів\"],\n  \"transformations\": [\"опис перетворень, які були зроблені\"]\n}\n\nВАЖЛИВО: Дані мають точно відповідати структурі обраного типу діаграми з усіма необхідними полями.",
+      "outputFormat": "json",
+      "requiredFields": ["chartData", "fields", "transformations"],
+      "dependsOn": ["step5_select_chart_type"]
+    },
+    {
+      "id": "step7_generate_chart_config",
+      "name": "Генерація конфігурації діаграми",
+      "description": "Генерує повну конфігурацію ECharts для обраного типу діаграми",
+      "prompt": "Створи повну конфігурацію ECharts для діаграми типу {selectedChartType}.\n\nДані для візуалізації:\n{chartData}\n\nВідповідь має бути у форматі JSON з повною конфігурацією ECharts, включаючи:\n- title (назва діаграми на основі даних)\n- tooltip (налаштування підказок)\n- legend (якщо потрібно)\n- xAxis/yAxis (якщо потрібно)\n- series (основна серія даних з правильним типом)\n- color (кольорова схема)\n\nВідповідь має бути у форматі JSON:\n{\n  \"echartsConfig\": {\"повна конфігурація ECharts\"},\n  \"title\": \"назва діаграми\",\n  \"description\": \"опис того, що показує діаграма\"\n}",
+      "outputFormat": "json",
+      "requiredFields": ["echartsConfig", "title", "description"],
+      "dependsOn": ["step6_format_chart_data"]
+    }
+  ],
+  "errorPrompts": {
+    "invalidData": "Дані не валідні або недостатні для створення діаграми. Перевір, чи текст містить числові значення та категорії.",
+    "noSuitableChart": "Не вдалося знайти підходящий тип діаграми для даних. Спробуй надати більш структуровані дані.",
+    "parsingError": "Помилка при обробці даних. Перевір формат тексту та спробуй ще раз."
+  },
+  "variables": {
+    "text": "Вхідний текст для аналізу",
+    "extractedData": "Дані з кроку витягування",
+    "validatedData": "Валідовані дані",
+    "dataStructure": "Структура даних з кроку аналізу",
+    "chartTypesDescription": "Опис доступних типів діаграм",
+    "selectedChartType": "Обраний тип діаграми",
+    "chartTypeDataStructure": "Вимоги до структури даних для обраного типу",
+    "chartTypeExample": "Приклад структури даних для обраного типу",
+    "chartData": "Дані у форматі для діаграми"
+  }
+}
+
